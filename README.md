@@ -3,112 +3,83 @@
 Predicting what a property in London actually sells for, using the UK
 government's official record of every property transaction.
 
-This started as a fairly simple question: *given where a property is and what
-kind of property it is, how well can you predict its sale price?* It turned
-into a full pipeline — from 800,000 raw government records down to a model that
-explains about 61% of the variation in London prices, plus an honest look at
-why it can't do better with the data available.
-
----
-
-## The problem
-
 London property is the biggest purchase most people ever make, and pricing is
 famously opaque. Asking prices are set by agents with their own incentives, and
 buyers rarely have a good independent sense of whether a place is fairly priced.
 
 The goal here is a model that estimates a fair sale price for a London property
-from its location and basic characteristics — the kind of thing that could sit
+from its location and basic characteristics. The kind of thing that could sit
 behind a "is this listing over- or under-priced?" tool, or help a buyer sanity-
 check an asking price before making an offer.
 
-It's framed as a **regression** problem: predict a continuous number (the price
-in pounds) rather than a category.
-
----
-
 ## The data
 
-Everything is built on the **HM Land Registry Price Paid Data** — the official
+Everything is built on the HM Land Registry Price Paid Data which the official
 government record of every property sale in England and Wales. It's released
 under the Open Government Licence and is the same dataset Rightmove, Zoopla and
-the mortgage industry treat as ground truth.
+the mortgage industry uses.
 
-I used the **2025 yearly file** (the most recent complete year), which contains
+I used the 2025 yearly file (the most recent complete year), which contains
 roughly 800,000 transactions across England and Wales. Filtering to London left
-about **72,500 sales** to work with.
+about 72,500 sales to work with.
 
-To capture the effect of transport access — a big deal in London — I enriched
-each property with a public **London postcodes reference** dataset, which
+To capture the effect of transport access which is a big deal in London, I enriched
+each property with a public London postcodes reference dataset, which
 provides precise coordinates, the transport zone, and the distance to the
 nearest station for every postcode.
 
-Both datasets are public but too large to store in this repo. See
-[Reproducing this project](#reproducing-this-project) for how to get them.
-
-### What's in it (and what isn't)
+Both datasets are public but too large to store in this repo. 
 
 Each row is one completed sale, with: price, date, postcode, property type
 (flat / terraced / semi / detached), whether it's a new build, and whether it's
 freehold or leasehold.
 
 What it crucially does **not** contain: floor area, number of bedrooms,
-condition, or remaining lease length. This turns out to matter a lot — more on
-that in [Limitations](#limitations).
+condition, or remaining lease length. This turns out to matter a lot and is 
+a big and annoying limitation for my model.
 
----
+## The Notebooks
 
-## How I approached it
+1. Profiling: Checking the shape, types, missing
+values and distributions of the raw data.
 
-The work is split across six notebooks, each doing one job. They run in order
-and reproduce every result from scratch.
-
-**1. Profiling** — Looking before touching. Checking the shape, types, missing
-values and distributions of the raw data, and writing down every problem to fix
-later rather than fixing things ad hoc.
-
-**2. Cleaning** — Filtering to London, keeping only standard open-market sales
+2. Cleaning: Filtering to London, keeping only standard open-market sales
 (dropping repossessions and bulk portfolio deals, which price differently),
-bounding prices to a sensible £50k–£10M range, and fixing data types. Every
-decision is documented with its reasoning.
+bounding prices to a £50k–£10M range, and fixing data types.
 
-**3. EDA** — Understanding the patterns. The big one: prices are heavily
+3. EDA: Understanding the patterns. The big one: prices are heavily
 right-skewed, so the model predicts `log(price)` rather than raw price. One
-genuinely surprising finding — properties *right next to* a station sell for
-slightly **less** than those 250–500m away, because being on top of a station
-means noise and crowds. The sweet spot is walkable-but-not-on-top-of-it.
+finding is that properties right next to a station sell for
+slightly less than those 250–500m away, because being on top of a station
+means noise and crowds.
 
-**4. Feature engineering** — Building features with an explicit reason for each
+4. Feature engineering: Building features with an explicit reason for each
 one: postcode district (finer than borough), property-type ordering, market
 depth per district, and the geographic enrichment (zone, distance to station).
-Features that didn't earn their place were dropped.
 
-**5. Modelling** — Comparing three model families with proper cross-validation:
-a linear baseline (Ridge), Random Forest, and XGBoost. Encoding is done inside
-a scikit-learn pipeline so nothing leaks from the test set into training.
+5. Modelling: Comparing three model families with cross-validation:
+a linear regression (Ridge), Random Forest, and XGBoost.
 
-**6. Explainability** — Using SHAP to understand *why* the model predicts what
+6. Explainability: Using SHAP to understand why the model predicts what
 it does, both overall and for individual properties.
 
----
 
 ## Results
 
-Five-fold cross-validation on the training set, then a single honest evaluation
-on a held-out test set the model never saw:
+Five-fold cross-validation on the training set.
 
 | Model | Cross-val R² | Notes |
-|---|---|---|
-| Ridge (linear baseline) | 0.58 | The floor — what the simplest approach achieves |
-| **Random Forest** | **0.69** | Best performer; chosen |
+
+| Ridge (linear baseline) | 0.58 | The floor  what the simplest approach achieves |
+| Random Forest | 0.69 | Best performer; chosen |
 | XGBoost | 0.67 | Strong, but lost to RF with default settings |
 
-**Final model — Random Forest, on the held-out test set:**
+Final model: Random Forest, on the held-out test set.
 
 | Metric | Value |
-|---|---|
-| R² | **0.61** |
-| Mean absolute error | **£161,000** |
+
+| R² | 0.61 |
+| Mean absolute error | £161,000 |
 | RMSE | £363,000 |
 
 A few honest notes on these numbers:
