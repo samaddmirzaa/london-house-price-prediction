@@ -68,19 +68,18 @@ it does, both overall and for individual properties.
 
 Five-fold cross-validation on the training set.
 
-| Model | Cross-val R² | Notes |
 
-| Ridge (linear baseline) | 0.58 | The floor  what the simplest approach achieves |
-| Random Forest | 0.69 | Best performer; chosen |
-| XGBoost | 0.67 | Strong, but lost to RF with default settings |
+Ridge (linear baseline) R² = 20.58 
+
+Random Forest R² = 0.69 
+
+XGBoost R² = 0.67 
 
 Final model: Random Forest, on the held-out test set.
 
-| Metric | Value |
-
-| R² | 0.61 |
-| Mean absolute error | £161,000 |
-| RMSE | £363,000 |
+R² = 0.61
+Mean absolute error = £161,000 
+RMSE = £363,000 
 
 A few honest notes on these numbers:
 
@@ -98,77 +97,60 @@ A few honest notes on these numbers:
   told me the gap is structural variance from the heavy-tailed price
   distribution, not memorization. So I kept the stronger original model.
 
----
 
 ## What drives the predictions
 
-SHAP analysis on a 1,000-property sample, in plain terms:
+SHAP analysis on a 1,000-property sample:
 
-The single biggest driver is **leasehold vs freehold status**, which I didn't
-expect. It makes sense though: in London, tenure is a strong proxy for property
-type (leasehold ≈ flat, freehold ≈ house) *and* it captures the genuine value
+The single biggest driver is leasehold vs freehold status, which is unexpected.
+It makes sense though: in London, tenure is a strong proxy for property
+type (leasehold = flat, freehold = house) and it shows the importance
 of owning the land outright.
 
-After that it's **location, location, location** — postcode district, transport
+After that it's location, location, location: postcode district, transport
 zone, and latitude/longitude. Five of the top eight features are geographic.
 Nothing surprising there, but it's nice to see the model quantify what every
 estate agent already knows.
 
-One honest finding: a feature I engineered (`is_central`, a simple central-or-
+A feature I engineered (`is_central`, a simple central-or-
 not flag) turned out to be near the bottom of the importance ranking. The zone
-and postcode-district features already captured centrality at finer resolution,
-making the flag redundant. I left it in because it helps the linear baseline's
-interpretability, but a leaner model could drop it. I'd rather report this
-honestly than pretend every feature I built was useful.
-
----
+and postcode-district features already captured centrality at finer resolution.
+I left it in because it helps the linear baseline's
+interpretability, but a leaner model could drop it.
 
 ## Limitations
 
-This is the part I'd most want you to read, because knowing what a model
-*can't* do matters as much as what it can.
-
-**The big one — no property size.** HM Land Registry records the transaction,
-not the property. There's no floor area, no bedroom count, no condition, no
+**No Property Size** 
+HM Land Registry records the transaction, not the property. There's no floor area, no bedroom count, no condition, no
 remaining lease length. So a 35m² studio and a 110m² penthouse in the same
-building, same type, same tenure, get the *same prediction* — the model
+building, same type, same tenure, get the same prediction. The model
 physically cannot tell them apart.
 
 This is the main reason R² caps around 0.61. Studies that use this same dataset
-*with* floor area report R² of 0.85–0.90. The ~25-point gap isn't a modelling
-failure or a tuning problem — it's an information ceiling. No algorithm can
-predict what it can't observe. The fix is better *data*, not a better
+with floor area report R² of 0.85–0.90. The 25-point gap isn't a modelling
+failure or a tuning problem it's an information ceiling. No algorithm can
+predict what it can't observe. The fix is better data, not a better
 algorithm.
 
-**Other honest caveats:**
+It's trained on 2025 only, it captures the 2025 price structure but has no
+concept of market trend and shouldn't be used for multi-year forecasting.
+It's scoped to standard residential sales between £50k and £10M.
+Repossessions, auctions, and ultra-prime property are explicitly out of
+scope.
+It predicts realised sale price, which isn't the same as intrinsic market
+value. A property can sell above or below fair value for all sorts of
+reasons the model can't see.
 
-- Coordinates come from postcode centroids (~15 addresses each), so
-  distance-to-station is accurate to roughly ±150m, not to the doorstep.
-- It's trained on 2025 only — it captures the 2025 price structure but has no
-  concept of market trend and shouldn't be used for multi-year forecasting.
-- It's scoped to standard residential sales between £50k and £10M.
-  Repossessions, auctions, and ultra-prime property are explicitly out of
-  scope; predicting on them would be extrapolation.
-- It predicts realised *sale price*, which isn't the same as intrinsic market
-  value — a property can sell above or below fair value for all sorts of
-  reasons the model can't see.
+Improvements can be made by:
 
----
-
-## Future improvements
-
-In rough order of how much they'd help:
-
-1. **Add property floor area via EPC data.** Energy Performance Certificates
+1. Add property floor area via EPC data. Energy Performance Certificates
    are public and include floor area in m². This is the single highest-impact
-   improvement — it's the main thing standing between 0.61 and 0.85.
-2. **Hyperparameter tuning**, particularly for XGBoost, which I expect would
+   improvement and is a major thing standing between 0.61 and 0.85.
+2. Hyperparameter tuning, particularly for XGBoost, which I expect would
    then overtake Random Forest.
-3. **An explicit property-type × district interaction feature.**
-4. **Multi-year data** to let the model learn market trends.
-5. A small web app (Streamlit) so the model can actually be used interactively.
+3. An explicit property-type × district interaction feature.
+4. Multi-year data to let the model learn market trends.
 
----
 
 ## Reproducing this project
 
@@ -193,10 +175,6 @@ The two raw files are:
 - **London postcodes reference** — from doogal.co.uk, save as
   `data/raw/london_postcodes.csv`
 
-`src/get_data.py` has the exact links and steps.
-
----
-
 ## Project structure
 
 ```
@@ -211,8 +189,6 @@ london-house-price-prediction/
 │   ├── 04_feature_engineering.ipynb
 │   ├── 05_modelling.ipynb
 │   └── 06_shap_explain.ipynb
-├── src/
-│   └── get_data.py    # data download instructions
 ├── models/            # trained model (not in git — regenerable)
 ├── reports/figures/   # plots used in this README
 ├── requirements.txt
@@ -220,11 +196,7 @@ london-house-price-prediction/
 └── README.md
 ```
 
----
-
-## A note on the tools
 
 Built with Python, pandas, scikit-learn, XGBoost and SHAP. The data is official
 UK government open data (HM Land Registry, Open Government Licence v3.0) plus a
-public London postcodes reference. Nothing here uses paid APIs or private data —
-the whole thing is reproducible by anyone from public sources.
+public London postcodes reference.
