@@ -1,10 +1,6 @@
 # Predicting London House Prices
 
-London property is the biggest purchase most people ever make, and pricing is
-famously opaque. Asking prices are set by agents with their own incentives, and
-buyers rarely have a good independent sense of whether a place is fairly priced.
-
-The goal here is a model that estimates a fair sale price for a London property
+The goal here was a model that estimates a fair sale price for a London property
 from its location and basic characteristics. The kind of thing that could sit
 behind a "is this listing over- or under-priced?" tool, or help a buyer sanity-
 check an asking price before making an offer.
@@ -66,7 +62,7 @@ it does, both overall and for individual properties.
 Five-fold cross-validation on the training set.
 
 
-Ridge (linear baseline) R² = 20.58 
+Ridge (linear baseline) R² = 0.58 
 
 Random Forest R² = 0.69 
 
