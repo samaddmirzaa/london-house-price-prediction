@@ -29,7 +29,7 @@ freehold or leasehold.
 
 What it crucially does **not** contain: floor area, number of bedrooms,
 condition, or remaining lease length. This turns out to matter a lot and is 
-a big and annoying limitation for my model.
+a big limitation for my model.
 
 ## The Notebooks
 
