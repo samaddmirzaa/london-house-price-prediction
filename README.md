@@ -71,7 +71,9 @@ XGBoost R² = 0.67
 Final model: Random Forest, on the held-out test set.
 
 R² = 0.61
+
 Mean absolute error = £161,000 
+
 RMSE = £363,000 
 
 A few honest notes on these numbers:
