@@ -76,22 +76,6 @@ Mean absolute error = £161,000
 
 RMSE = £363,000 
 
-A few honest notes on these numbers:
-
-- The linear baseline (0.58) being clearly beaten by the tree models (0.69)
-  confirms the extra complexity is earning its keep — that non-linear
-  distance-to-station effect is exactly the kind of thing trees catch and
-  linear models can't.
-- Random Forest beat XGBoost, which is slightly unusual — XGBoost usually wins
-  on tabular data, but it's more sensitive to hyperparameter tuning, and I
-  deliberately compared model *families* with sensible defaults rather than
-  tuning one to death. Tuning XGBoost is a clear next step.
-- There's a gap between cross-val R² (0.69) and test R² (0.61). I tested
-  whether this was overfitting by regularizing the model — it wasn't:
-  regularizing dropped both numbers equally without closing the gap, which
-  told me the gap is structural variance from the heavy-tailed price
-  distribution, not memorization. So I kept the stronger original model.
-
 
 ## What drives the predictions
 
