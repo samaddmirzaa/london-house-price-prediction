@@ -91,12 +91,6 @@ zone, and latitude/longitude. Five of the top eight features are geographic.
 Nothing surprising there, but it's nice to see the model quantify what every
 estate agent already knows.
 
-A feature I engineered (`is_central`, a simple central-or-
-not flag) turned out to be near the bottom of the importance ranking. The zone
-and postcode-district features already captured centrality at finer resolution.
-I left it in because it helps the linear baseline's
-interpretability, but a leaner model could drop it.
-
 ## Limitations
 
 **No Property Size** 
