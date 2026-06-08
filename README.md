@@ -94,6 +94,7 @@ estate agent already knows.
 ## Limitations
 
 **No Property Size** 
+
 HM Land Registry records the transaction, not the property. There's no floor area, no bedroom count, no condition, no
 remaining lease length. So a 35m² studio and a 110m² penthouse in the same
 building, same type, same tenure, get the same prediction. The model
